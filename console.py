@@ -11,7 +11,6 @@ from models.city import City
 from models.amenity import Amenity
 from models.review import Review
 
-
 class HBNBCommand(cmd.Cmd):
     """ Contains the functionality for the HBNB console"""
 
@@ -112,20 +111,62 @@ class HBNBCommand(cmd.Cmd):
     def emptyline(self):
         """ Overrides the emptyline method of CMD """
         pass
+    
+    def parse_params(self, params):
+        """Helper function to apply logic to object parameters in create command"""
+        parsed_dict = {}
+        params_list = params.split()
+
+        for param in params_list:
+            key_value = param.split("=")
+
+            if len(key_value) == 2:
+                key, value = key_value
+
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1].replace('_', ' ')
+                    value = value.replace('\\"', '"')
+                elif '.' in value:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        continue
+                else:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        continue
+
+                parsed_dict[key] = value
+
+        return parsed_dict
 
     def do_create(self, args):
-        """ Create an object of any class"""
+        """Create an object of any class"""
         if not args:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
+        elif args.split()[0] not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
 
+        class_and_params = args.split(" ", 1)
+        classname = class_and_params[0]
+        params = class_and_params[1] if len(class_and_params) > 1 else ""
+
+        if params:
+            params_dict = self.parse_params(params)
+            new_instance = HBNBCommand.classes[classname](**params_dict)
+            storage.save()
+            print(new_instance.id)
+            storage.save()
+        else:
+            new_instance = HBNBCommand.classes[classname]()
+            storage.save()
+            print(new_instance.id)
+            storage.save()
+
+        
     def help_create(self):
         """ Help information for the create method """
         print("Creates a class of any type")
