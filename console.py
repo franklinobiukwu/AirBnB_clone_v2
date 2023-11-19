@@ -115,76 +115,62 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, args):
-        """ Create an object of any class"""
-        whitespace_index = 0
-        model = args
-        params = []
-        attribs = {}
-
+        """Create an object of any class with given parameters"""
         if not args:
             print("** class name missing **")
             return
-        # Check for parameters
-        whitespace_index = args.find(" ")
-        if (whitespace_index != -1):
-            # Retrieve token before whitespace (Model).
-            model = args[:args.find(" ")].strip()
-            # Retrieve parameters as a list
-            params = args[args.find(" "):].strip().split(" ")
-
-        if model not in HBNBCommand.classes:
+        elif args.split()[0] not in self.classes:
             print("** class doesn't exist **")
             return
 
-        for param in params:
-            # store attribute names and values for model
-            pname, pvalue = param.split("=")
-            pvalue, ptype = HBNBCommand.find_type(pvalue)
-            if (not pvalue and not ptype):
-                # Value parsing failed: Invalid value was given
+        class_and_params = args.split(" ", 1)
+        classname = class_and_params[0]
+        params = class_and_params[1] if len(class_and_params) > 1 else ""
+
+        if params:
+            params_dict = self.parse_params(params)
+            if params_dict is None:
+                print("** invalid parameter format **")
                 return
-            attribs[pname] = pvalue
+            new_instance = self.classes[classname](**params_dict)
+            new_instance.save()
+            print(new_instance.id)
+        else:
+            new_instance = self.classes[classname]()
+            new_instance.save()
+            print(new_instance.id)
+            storage.save()
 
-        new_instance = HBNBCommand.classes[model](**attribs)
-        new_instance.save()
-        print(new_instance.id)
+    def parse_params(self, params):
+        """Helper function to apply logic to object
+        parameters in create command"""
+        parsed_dict = {}
+        params_list = params.split()
 
-    @staticmethod
-    def find_type(value):
-        """
-        Returns the data type for the given value
+        for param in params_list:
+            key_value = param.split("=")
 
-        Parameters
-            value: string
-            The value whose type needs to be returned
+            if len(key_value) == 2:
+                key, value = key_value
 
-        Return
-            The data type for value
-        """
-        param_types = {"s": "string",
-                       "i": "int",
-                       "f": "float"}
-        cast_functions = {"string": str,
-                          "int": int,
-                          "float": float}
-        ptype = ""
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1].replace('_', ' ')
+                    value = value.replace('\\"', '"')
+                elif '.' in value:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        return None
+                else:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        return None
 
-        ptype = "s" if value.startswith("\"")\
-                else "f" if value.find(".") != -1\
-                else "i"
-        ptype = param_types.get(ptype)
-
-        try:
-            # Check for a valid value
-            value = value[1:-1].replace("\"", "\"").\
-                replace("_", " ").strip()\
-                if ptype == "string"\
-                else value
-            value = cast_functions.get(ptype)(value)
-        except ValueError:
-            value, ptype = None, None
-
-        return ((value, ptype,))
+                parsed_dict[key] = value
+            else:
+                return None
+        return parsed_dict
 
     def help_create(self):
         """ Help information for the create method """
