@@ -112,20 +112,69 @@ class HBNBCommand(cmd.Cmd):
     def emptyline(self):
         """ Overrides the emptyline method of CMD """
         pass
-
+    
     def do_create(self, args):
-        """ Create an object of any class"""
+        """Create an object of any class with given parameters"""
         if not args:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
+        elif args.split()[0] not in self.classes:
             print("** class doesn't exist **")
             return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
-        print(new_instance.id)
-        storage.save()
 
+        class_and_params = args.split(" ", 1)
+        classname = class_and_params[0]
+        params = class_and_params[1] if len(class_and_params) > 1 else ""
+
+        if params:
+            params_dict = self.parse_params(params)
+            if params_dict is None:
+                print("** invalid parameter format **")
+                return
+            new_instance = self.classes[classname](**params_dict)
+            storage.save()
+            print(new_instance.id)
+            storage.save()
+        else:
+            new_instance = self.classes[classname]()
+            storage.save()
+            print(new_instance.id)
+            storage.save()
+
+    def parse_params(self, params):
+        """Helper function to apply logic to object
+        parameters in create command"""
+        parsed_dict = {}
+        params_list = params.split()
+
+        for param in params_list:
+            key_value = param.split("=")
+
+            if len(key_value) == 2:
+                key, value = key_value
+
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1].replace('_', ' ')
+                    value = value.replace('\\"', '"')
+                elif '.' in value:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        return None
+                else:
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        return None
+
+                parsed_dict[key] = value
+            else:
+                return None  # Invalid parameter format
+
+        return parsed_dict
+
+    
+    
     def help_create(self):
         """ Help information for the create method """
         print("Creates a class of any type")
