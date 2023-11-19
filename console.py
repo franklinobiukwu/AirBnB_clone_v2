@@ -10,6 +10,7 @@ from models.state import State
 from models.city import City
 from models.amenity import Amenity
 from models.review import Review
+from os import environ
 
 
 class HBNBCommand(cmd.Cmd):
@@ -19,16 +20,16 @@ class HBNBCommand(cmd.Cmd):
     prompt = '(hbnb) ' if sys.__stdin__.isatty() else ''
 
     classes = {
-               'BaseModel': BaseModel, 'User': User, 'Place': Place,
-               'State': State, 'City': City, 'Amenity': Amenity,
-               'Review': Review
-              }
+        'BaseModel': BaseModel, 'User': User, 'Place': Place,
+        'State': State, 'City': City, 'Amenity': Amenity,
+        'Review': Review
+    }
     dot_cmds = ['all', 'count', 'show', 'destroy', 'update']
     types = {
-             'number_rooms': int, 'number_bathrooms': int,
-             'max_guest': int, 'price_by_night': int,
-             'latitude': float, 'longitude': float
-            }
+        'number_rooms': int, 'number_bathrooms': int,
+        'max_guest': int, 'price_by_night': int,
+        'latitude': float, 'longitude': float
+    }
 
     def preloop(self):
         """Prints if isatty is false"""
@@ -73,7 +74,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
+                    if pline[0] == '{' and pline[-1] == '}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -112,69 +113,79 @@ class HBNBCommand(cmd.Cmd):
     def emptyline(self):
         """ Overrides the emptyline method of CMD """
         pass
-    
+
     def do_create(self, args):
-        """Create an object of any class with given parameters"""
+        """ Create an object of any class"""
+        whitespace_index = 0
+        model = args
+        params = []
+        attribs = {}
+
         if not args:
             print("** class name missing **")
             return
-        elif args.split()[0] not in self.classes:
+        # Check for parameters
+        whitespace_index = args.find(" ")
+        if (whitespace_index != -1):
+            # Retrieve token before whitespace (Model).
+            model = args[:args.find(" ")].strip()
+            # Retrieve parameters as a list
+            params = args[args.find(" "):].strip().split(" ")
+
+        if model not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
 
-        class_and_params = args.split(" ", 1)
-        classname = class_and_params[0]
-        params = class_and_params[1] if len(class_and_params) > 1 else ""
-
-        if params:
-            params_dict = self.parse_params(params)
-            if params_dict is None:
-                print("** invalid parameter format **")
+        for param in params:
+            # store attribute names and values for model
+            pname, pvalue = param.split("=")
+            pvalue, ptype = HBNBCommand.find_type(pvalue)
+            if (not pvalue and not ptype):
+                # Value parsing failed: Invalid value was given
                 return
-            new_instance = self.classes[classname](**params_dict)
-            storage.save()
-            print(new_instance.id)
-            storage.save()
-        else:
-            new_instance = self.classes[classname]()
-            storage.save()
-            print(new_instance.id)
-            storage.save()
+            attribs[pname] = pvalue
 
-    def parse_params(self, params):
-        """Helper function to apply logic to object
-        parameters in create command"""
-        parsed_dict = {}
-        params_list = params.split()
+        new_instance = HBNBCommand.classes[model](**attribs)
+        new_instance.save()
+        print(new_instance.id)
 
-        for param in params_list:
-            key_value = param.split("=")
+    @staticmethod
+    def find_type(value):
+        """
+        Returns the data type for the given value
 
-            if len(key_value) == 2:
-                key, value = key_value
+        Parameters
+            value: string
+            The value whose type needs to be returned
 
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1].replace('_', ' ')
-                    value = value.replace('\\"', '"')
-                elif '.' in value:
-                    try:
-                        value = float(value)
-                    except ValueError:
-                        return None
-                else:
-                    try:
-                        value = int(value)
-                    except ValueError:
-                        return None
+        Return
+            The data type for value
+        """
+        param_types = {"s": "string",
+                       "i": "int",
+                       "f": "float"}
+        cast_functions = {"string": str,
+                          "int": int,
+                          "float": float}
+        ptype = ""
 
-                parsed_dict[key] = value
-            else:
-                return None  # Invalid parameter format
+        ptype = "s" if value.startswith("\"")\
+                else "f" if value.find(".") != -1\
+                else "i"
+        ptype = param_types.get(ptype)
 
-        return parsed_dict
+        try:
+            # Check for a valid value
+            value = value[1:-1].replace("\"", "\"").\
+                replace("_", " ").strip()\
+                if ptype == "string"\
+                else value
+            value = cast_functions.get(ptype)(value)
+        except ValueError:
+            value, ptype = None, None
 
-    
-    
+        return ((value, ptype,))
+
     def help_create(self):
         """ Help information for the create method """
         print("Creates a class of any type")
@@ -236,7 +247,7 @@ class HBNBCommand(cmd.Cmd):
         key = c_name + "." + c_id
 
         try:
-            del(storage.all()[key])
+            del (storage.all()[key])
             storage.save()
         except KeyError:
             print("** no instance found **")
@@ -255,11 +266,11 @@ class HBNBCommand(cmd.Cmd):
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            for k, v in storage._FileStorage__objects.items():
-                if k.split('.')[0] == args:
-                    print_list.append(str(v))
+
+            for value in storage.all(HBNBCommand.classes[args]).values():
+                print_list.append(str(value))
         else:
-            for k, v in storage._FileStorage__objects.items():
+            for k, v in storage.all().items():
                 print_list.append(str(v))
 
         print(print_list)
@@ -321,7 +332,7 @@ class HBNBCommand(cmd.Cmd):
                 args.append(v)
         else:  # isolate args
             args = args[2]
-            if args and args[0] is '\"':  # check for quoted arg
+            if args and args[0] == '\"':  # check for quoted arg
                 second_quote = args.find('\"', 1)
                 att_name = args[1:second_quote]
                 args = args[second_quote + 1:]
@@ -329,10 +340,10 @@ class HBNBCommand(cmd.Cmd):
             args = args.partition(' ')
 
             # if att_name was not quoted arg
-            if not att_name and args[0] is not ' ':
+            if not att_name and args[0] != ' ':
                 att_name = args[0]
             # check for quoted val arg
-            if args[2] and args[2][0] is '\"':
+            if args[2] and args[2][0] == '\"':
                 att_val = args[2][1:args[2].find('\"', 1)]
 
             # if att_val was not quoted arg
@@ -368,6 +379,7 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
