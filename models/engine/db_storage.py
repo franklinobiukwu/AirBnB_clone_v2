@@ -12,8 +12,7 @@ from models.review import Review
 from models.state import State
 from models.user import User
 
-
-class DBStorage():
+class DBStorage:
     """Database class"""
 
     __engine = None
@@ -27,9 +26,10 @@ class DBStorage():
         database = environ.get('HBNB_MYSQL_DB')
         env = environ.get('HBNB_ENV')
 
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@localhost/{}'
+        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}:3306/{}'
                                       .format(user,
                                               password,
+                                              host,
                                               database), pool_pre_ping=True)
 
         if env == 'test':

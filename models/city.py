@@ -1,20 +1,17 @@
 #!/usr/bin/python3
 """ City Module for HBNB project """
-from models.base_model import BaseModel
+from models.base_model import BaseModel, Base
 from sqlalchemy.ext.declarative import declarative_base
 from os import environ
 from sqlalchemy import Column, String, ForeignKey
 
 
-Base = declarative_base()
-
-
 class City(BaseModel, Base):
     """ The city class, contains state ID and name """
-     
-    if (environ.get('HBNB_TYPE_STORAGE') == 'db'):
+
+    if environ.get('HBNB_TYPE_STORAGE') == 'db':
         __tablename__ = 'cities'
-        
+
         name = Column(String(128), nullable=False)
         state_id = Column(String(60), ForeignKey('states.id'), nullable=False)
     else:

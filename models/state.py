@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """ State Module for HBNB project """
-from models.base_model import BaseModel
+from models.base_model import BaseModel, Base
 from sqlalchemy.ext.declarative import declarative_base
 from os import environ
 from sqlalchemy import Column, String, ForeignKey
@@ -9,21 +9,19 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-
 class State(BaseModel, Base):
     """ State class """
-    
-    if (environ.get('HBNB_TYPE_STORAGE') == 'db'):
+
+    if environ.get('HBNB_TYPE_STORAGE') == 'db':
         __tablename__ = 'states'
-        
+
         name = Column(String(128), nullable=False)
-        cities = relationship("City", cascade="delete",
-                              backref="state")
+        cities = relationship("City", cascade="delete", backref="state")
     else:
         name = ''
         cities = []
 
-    if (environ.get('HBNB_TYPE_STORAGE') == 'fs'):
+    if environ.get('HBNB_TYPE_STORAGE') == 'fs':
         @property
         def cities(self):
             """Getter attribute for cities in file storage"""
