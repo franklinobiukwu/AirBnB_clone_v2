@@ -5,7 +5,7 @@ from models.place import Place
 
 
 class test_Place(test_basemodel):
-    """ Define test for Place class"""
+    """ Tests for place model """
 
     def __init__(self, *args, **kwargs):
         """ """
