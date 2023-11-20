@@ -4,15 +4,11 @@ from models.engine.file_storage import FileStorage
 from models.engine.db_storage import DBStorage
 from os import environ
 
-
-storage_type = environ.get('HBNB_TYPE_STORAGE')
 storage = None
+storage_type = environ.get("HBNB_TYPE_STORAGE", "file")
 
-if storage_type == 'db':
-    from models.engine.db_storage import DBStorage
+if (storage_type == "db"):
     storage = DBStorage()
-    storage.reload()
-else: 
-    from models.engine.file_storage import FileStorage
+else:
     storage = FileStorage()
-    storage.reload()
+storage.reload()

@@ -1,33 +1,38 @@
 #!/usr/bin/python3
 """ State Module for HBNB project """
-from models.base_model import BaseModel, Base
-from sqlalchemy.ext.declarative import declarative_base
-from os import environ
-from sqlalchemy import Column, String, ForeignKey
+from models.base_model import BaseModel
+from models.base_model import Base
 from models.city import City
+from os import environ
+
+from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
-Base = declarative_base()
 
 class State(BaseModel, Base):
-    """ State class """
+    """ State class for storing state entries """
 
-    if environ.get('HBNB_TYPE_STORAGE') == 'db':
-        __tablename__ = 'states'
+    __tablename__ = "states"
 
+    if (environ.get("HBNB_TYPE_STORAGE", "file") == "db"):
         name = Column(String(128), nullable=False)
-        cities = relationship("City", cascade="delete", backref="state")
+        cities = relationship("City", cascade="delete",
+                              backref="state")
     else:
-        name = ''
+        name = ""
         cities = []
 
-    if environ.get('HBNB_TYPE_STORAGE') == 'fs':
+    if (environ.get("HBNB_TYPE_STORAGE", "fs") == "fs"):
         @property
         def cities(self):
-            """Getter attribute for cities in file storage"""
+            """ Obtains the cities for a state """
             from models import storage
-            city_list = []
-            for city in storage.all('City').values():
-                if city.state_id == self.id:
-                    city_list.append(city)
-            return city_list
+
+            my_cities = []
+            my_dict = storage.all(City)
+
+            for key, value in my_dict.items():
+                if (value.state_id == self.id):
+                    my_cities.append(value)
+
+            return (my_cities)

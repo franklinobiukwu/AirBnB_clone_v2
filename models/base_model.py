@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 from os import environ
 
+
 Base = declarative_base()
 
 
