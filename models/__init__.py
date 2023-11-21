@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 """This module instantiates an object of class FileStorage"""
 
-print("Initializing")
 from os import environ
 
 storage_type = environ.get('HBNB_TYPE_STORAGE')
