@@ -139,7 +139,6 @@ class HBNBCommand(cmd.Cmd):
             new_instance = self.classes[classname]()
             new_instance.save()
             print(new_instance.id)
-            storage.save()
 
     def parse_params(self, params):
         """Helper function to apply logic to object
