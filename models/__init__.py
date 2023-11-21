@@ -8,9 +8,11 @@ storage_type = environ.get('HBNB_TYPE_STORAGE')
 storage = None
 
 if storage_type == 'db':
+    print("Of the DB!!")
     from models.engine.db_storage import DBStorage
     storage = DBStorage()
-else: 
+else:
+    print("Of the FileStorage")
     from models.engine.file_storage import FileStorage
     storage = FileStorage()
 
