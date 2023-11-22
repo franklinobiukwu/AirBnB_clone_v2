@@ -1,11 +1,16 @@
 #!/usr/bin/python3
 """Module for Database Storage"""
-from sqlalchemy import create_engine
+from os import environ
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
-from os import environ
-
+from models.city import City
+from models.place import Place
+from models.review import Review
+from models.state import State
+from models.user import User
+from models.amenity import Amenity
 from models.base_model import Base
+from sqlalchemy import create_engine
 
 class DBStorage():
     """Database class"""
@@ -21,9 +26,10 @@ class DBStorage():
         database = environ.get('HBNB_MYSQL_DB')
         env = environ.get('HBNB_ENV')
 
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@localhost/{}'
+        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'
                                       .format(user,
                                               password,
+                                              host,
                                               database), pool_pre_ping=True)
 
         if env == 'test':
@@ -34,12 +40,6 @@ class DBStorage():
         Args:
             cls = Is the given class name to be queried
         """
-        from models.city import City
-        from models.place import Place
-        from models.review import Review
-        from models.state import State
-        from models.user import User
-        from models.amenity import Amenity
 
         new_dict = {}
 
@@ -51,21 +51,29 @@ class DBStorage():
             "City": City,
             "Amenity": Amenity,
         }
-
-        if cls is not None and cls not in clsname_dict:
-            return new_dict
-
+        print('ENTER THE ALL BLOCK')
+        
         if cls is not None:
-            objects = self.__session.query(clsname_dict[cls]).all()
+            print("HAS CLASS NAME")
+            print(cls)
+            objects = self.__session.query(cls).all()
         else:
+            print('CLASS IN NONE')
             objects = []
             for classes in clsname_dict.values():
                 objects.append(self.__session.query(classes).all())
+        print('******************')
+        print(objects)
+        print("******************")
         for obj in objects:
             key = "{}.{}".format(obj.__class__.__name__, obj.id)
             value = obj
             new_dict[key] = value
-
+            
+        print('ABOUT TO RETURN')
+        print("--------------------------------------")
+        print(new_dict)
+        print("--------------------------------------")
         return new_dict
 
     def new(self, obj):
@@ -87,5 +95,5 @@ class DBStorage():
         """Creates all tables in the database"""
         Base.metadata.create_all(self.__engine)
 
-        Session = sessionmaker(bind=self.__engine, expire_on_commit=False)
-        self.__session = scoped_session(Session)
+        session = sessionmaker(bind=self.__engine, expire_on_commit=False)
+        self.__session = scoped_session(session)
