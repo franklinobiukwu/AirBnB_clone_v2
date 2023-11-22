@@ -253,10 +253,6 @@ class HBNBCommand(cmd.Cmd):
                 return
 
             for value in storage.all(HBNBCommand.classes[args]).values():
-                print('==============================')
-                print(value.to_dict())
-                print(type(value))
-                print('==============================')
                 print_list.append(str(value))
         else:
             for k, v in storage.all().items():

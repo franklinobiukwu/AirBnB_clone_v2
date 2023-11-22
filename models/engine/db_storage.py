@@ -12,6 +12,7 @@ from models.amenity import Amenity
 from models.base_model import Base
 from sqlalchemy import create_engine
 
+
 class DBStorage():
     """Database class"""
 
@@ -51,29 +52,17 @@ class DBStorage():
             "City": City,
             "Amenity": Amenity,
         }
-        print('ENTER THE ALL BLOCK')
-        
+
         if cls is not None:
-            print("HAS CLASS NAME")
-            print(cls)
             objects = self.__session.query(cls).all()
         else:
-            print('CLASS IN NONE')
             objects = []
             for classes in clsname_dict.values():
                 objects.append(self.__session.query(classes).all())
-        print('******************')
-        print(objects)
-        print("******************")
         for obj in objects:
             key = "{}.{}".format(obj.__class__.__name__, obj.id)
             value = obj
             new_dict[key] = value
-            
-        print('ABOUT TO RETURN')
-        print("--------------------------------------")
-        print(new_dict)
-        print("--------------------------------------")
         return new_dict
 
     def new(self, obj):
